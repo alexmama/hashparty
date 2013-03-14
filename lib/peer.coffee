@@ -26,9 +26,9 @@ class Peer extends EventEmitter2
   fullname: undefined
 
   constructor: (p_barename) ->
-    super(wildcard: true)
+    super(wildcard: true, verbose: true)
     @barename = p_barename
-    @fullname = @barename+"."+UUID.generate()
+    @fullname = "#{@barename}.#{UUID.generate()}"
 
 exports.Peer = Peer
 

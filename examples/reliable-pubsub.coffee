@@ -6,16 +6,22 @@
 
 main = ->
 
-  channel = new Channel("CH1")
-  # Adding 2 instances of SUB1 and one instance of SUB2
-  (new Subscriber "SUB1").subscribe(channel)
-  (new Subscriber "SUB1").subscribe(channel)
-  (new Subscriber "SUB2").subscribe(channel)
+  tracker = new Channel("TRACKER")
+  ch1 = new Channel("CHONE")
+  ch2 = new Channel("CHTWO")
+
+  # Adding 3 instances of SUB1 and 2 instance of SUB2, registered on 2 different channels
+  (new Subscriber "SONE", tracker).subscribe(ch1)
+  (new Subscriber "SONE", tracker).subscribe(ch1)
+  (new Subscriber "SONE", tracker).subscribe(ch2)
+  (new Subscriber "STWO", tracker).subscribe(ch1)
+  (new Subscriber "STWO", tracker).subscribe(ch2)
 
   publisher = new Publisher()
-  publisher.addChannel(channel)
+  publisher.addChannel(ch1)
+  publisher.addChannel(ch2)
 
-  msgCount = 21
+  msgCount = 11
 
   publisher.send "msg #{msgCount}" while msgCount -= 1
 

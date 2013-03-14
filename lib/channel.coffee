@@ -1,41 +1,15 @@
 _ = require "underscore"
 async = require "async"
+{Peer} = require "./peer"
 
-class Channel
+class Channel extends Peer
 
-  # @property {string}
-  id: undefined
-  # @property {Object}
-  subscribers: undefined
+  constructor: (p_barename) ->
+    super(p_barename)
+    # @subscribers = []
 
-  constructor: (p_id) ->
-    @id = p_id
-    @subscribers = []
-
-  addSubscriber: (newsub) ->
-    _.each(
-            @subscribers,
-          (sub) ->
-            # reference subscribers manually
-            if sub.barename is newsub.barename
-              sub.addFriend newsub.fullname
-              newsub.addFriend sub.fullname
-          )
-    @subscribers.push newsub
-
-  publish: (msg) ->
+  publish: (p_message) ->
     # republishing every message to subcribers
-    @send(msg)
-
-  send: (msg) ->
-
-    # sending the message to every subscribers (async mode)
-    async.each(
-        @subscribers,
-      (sub) =>
-        sub.onMessage(msg)
-        (err) ->
-          # do nothing
-      )
+    @emit("message.copy", p_message)
 
 exports.Channel = Channel

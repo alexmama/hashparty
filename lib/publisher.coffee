@@ -14,7 +14,7 @@ class Publisher
 
   send: (msg) ->
 
-    # sending the message to every subscribers (async mode)
+    # sending the message to every channels (async mode)
     async.each(
       @channels,
       (ch) =>
