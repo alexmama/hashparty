@@ -1,7 +1,7 @@
-_ = require "underscore"
+{Peer} = require "./peer"
 async = require "async"
 
-class Publisher
+class Publisher extends Peer
 
   # @property {Object}
   channels: undefined

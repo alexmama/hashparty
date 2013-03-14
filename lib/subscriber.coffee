@@ -5,41 +5,44 @@ _ = require "underscore"
 class Subscriber extends Peer
 
   # @property {Object}
-  friends: undefined
+  subscribers: undefined
   ring: undefined
   msgCount: undefined
 
   constructor: (p_barename, tracker) ->
-    super(p_barename)
-    @friends = []
-    @friends.push @fullname
+    super(p_barename, tracker)
+    @subscribers = []
+    @subscribers.push @fullname
     @ring = new HashRing(@fullname)
     @msgCount = 0
-    # registering to friend peers that may come
-    # TODO: use specialized multicast discovery channel for this purpose)
-    tracker.on "#{@barename}.*", (p_peerstatus) =>
-      # a friend has come, but is it me or is it the first time
-      if not _.contains(@friends, p_peerstatus.full)
-        # it is the first time and it is not me, we add it as a friend...
-        @addFriend(p_peerstatus.full)
-        #...then I reply him, and all others (including myself), with my own status
-        # TODO: reply using a single direct connection rather than broadcast)
-        tracker.emit(@fullname, bare: @barename, full: @fullname)
 
-    # now first advertise peers that it comes, i should normally receive a copy
-    # TODO: use specialized multicast discovery channel for this purpose)
-    tracker.emit(@fullname, bare: @barename, full: @fullname)
-
-  subscribe: (channel) ->
+  subscribe: (p_channel) ->
+    @discoverFriendsSubscriptions(p_channel)
     # listening to message published on the channel
-    channel.on "message.copy", (p_message) =>
+    p_channel.on "message.copy", (p_message) =>
       if @fullname is @ring.get(p_message)
         console.log "'#{p_message}' processed by #{@fullname}"
         @msgCount++
 
-  addFriend: (p_fullname) ->
-    console.log "'#{@fullname}' elected peer '#{p_fullname}' as a friend"
-    @friends.push p_fullname
+  discoverFriendsSubscriptions: (p_channel) ->
+    # registering any subscriber that may appear
+    # TODO: use specialized multicast discovery channel for this purpose)
+    @tracker.on "sub.#{p_channel.barename}.*.#{@barename}.*", (p_subscription) =>
+      # a new subscription has come, but maybe it is mine or it is not the first time I see it
+      if not _.contains(@subscribers, p_subscription.full)
+        # it is the first time and it is not me, we add it as a friend...
+        @addFriendSub(p_subscription.full)
+        #...then I reply him, and all others (including myself), with my own status
+        # TODO: reply using a single direct connection rather than broadcast)
+        @tracker.emit("sub.#{p_channel.fullname}.#{@fullname}", full: @fullname)
+
+    # now first advertise peers that it comes, i should normally receive a copy
+    # TODO: use specialized multicast discovery channel for this purpose)
+    @tracker.emit("sub.#{p_channel.fullname}.#{@fullname}", full: @fullname)
+
+  addFriendSub: (p_fullname) ->
+    console.log "'#{@fullname}' detected subscription of a clone '#{p_fullname}' to channel 'X'"
+    @subscribers.push p_fullname
     @ring.add p_fullname
 
 #  removeFriend: (friendId) ->
