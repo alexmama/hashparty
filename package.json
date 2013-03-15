@@ -15,7 +15,7 @@
     "underscore": "~1.4.4",
     "async": "~0.2.6",
     "kademlia": "~0.2.0",
-    "zmq": "~2.2.0",
+    "zmq": "~2.3.0",
     "eventemitter2": "~0.4.11"
   },
   "devDependencies": {
