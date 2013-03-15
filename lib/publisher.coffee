@@ -6,7 +6,8 @@ class Publisher extends Peer
   # @property {Object}
   channels: undefined
 
-  constructor: ->
+  constructor: (p_barename, p_tracker) ->
+    super(p_barename, p_tracker)
     @channels = []
 
   addChannel: (newch) ->
