@@ -18,7 +18,7 @@ main = ->
   (new hashparty.Subscriber "STWO", tracker).subscribe(ch2)
   (new hashparty.Subscriber "STWO", tracker).subscribe(ch3)
 
-  publisher = new hashparty.Publisher()
+  publisher = new hashparty.Publisher("PUB")
   publisher.addChannel(ch1)
   publisher.addChannel(ch2)
   publisher.addChannel(ch3)
