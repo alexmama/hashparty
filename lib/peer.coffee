@@ -1,5 +1,7 @@
 _ = require "underscore"
+_s = require "underscore.string"
 {EventEmitter2} = require "eventemitter2"
+zmq = require "zmq"
 
 UUID = ->
 UUID.generate = ->
@@ -26,7 +28,8 @@ class Peer extends EventEmitter2
   barename: undefined
   fullname: undefined
   friends: undefined
-  tracker: undefined
+  tracker_insocket: undefined
+  tracker_outsocket: undefined
 
   constructor: (p_barename, p_tracker) ->
     super(wildcard: true, verbose: true)
@@ -35,28 +38,52 @@ class Peer extends EventEmitter2
     @friends = []
     @friends.push @fullname
     if p_tracker
-      @tracker = p_tracker
-      @discoverFriends()
+      # Connecting to tracker
+      @tracker_insocket = zmq.socket "pub"
+      @tracker_insocket.connect p_tracker.in_endpoint
+      @tracker_outsocket = zmq.socket "sub"
+      @tracker_outsocket.connect p_tracker.out_endpoint
+      @tracker_outsocket.on "message", (p_message) =>
+        #console.log "message from tracker: '#{p_message}'"
+        parts = _s.words(p_message, "::")
+        type = parts[0]
+        publisher = parts[1]
+        payload = JSON.parse parts[2]
+        payload.publisher = publisher
+        @emit "#{type}::#{publisher}", payload
 
-  discoverFriends: ->
-    # registering any peer that may appear
-    # TODO: use specialized multicast discovery channel for this purpose)
-    @tracker.on "state.#{@barename}.*", (p_peerstatus) =>
-      # a peer has come, but maybe it is myself or it is not the first time I see it
-      if not _.contains(@friends, p_peerstatus.full)
-        # it is the first time and it is not me, we will reference it...
-        @addFriend(p_peerstatus.full)
-        #...then I reply him, and all others (including myself), with my own status
-        # TODO: reply using a single direct connection rather than broadcast)
-        @tracker.emit("state.#{@fullname}", full: @fullname)
+      # Enabling peer discovery
+      @tracker_outsocket.subscribe("peerstate::#{@barename}") # subscribe to status of my friends (same barename)
+      @on "peerstate::#{@barename}.*", (p_peerstatus) =>
+        # TODO: check that it is really a peer status
+        # a peer has come, but maybe it is myself or it is not the first time I see it
+        if not _.contains(@friends, p_peerstatus.publisher)
+          # it is the first time and it is not me, we will reference it...
+          @addFriend(p_peerstatus.publisher)
+          #...then I reply him, and all others (including myself), with my own status
+          # TODO: reply using a single direct connection rather than broadcast)
+          @sendStateToTracker()
 
-    # now first advertise peers that it comes, i should normally receive a copy
-    # TODO: use specialized multicast discovery channel for this purpose)
-    @tracker.emit("state.#{@fullname}", full: @fullname)
+      ## Initiating discovery
+      setTimeout( # waiting for 50 millis before starting discovery
+        # now will send my state to initiate discovery
+        => @sendStateToTracker()
+      ,50)
+
+  bareFromFull: (p_fullname) ->
+    _s.strLeft(p_fullname, ".")
+
+  sendStateToTracker: ->
+    if @tracker_insocket
+      @tracker_insocket.send "peerstate::#{@fullname}::#{JSON.stringify(status: "ready")}"
 
   addFriend: (p_fullname) ->
     console.log "'#{@fullname}' discovered a clone '#{p_fullname}'"
     @friends.push p_fullname
+
+  clean: ->
+    @tracker_insocket.close() if @tracker_insocket
+    @tracker_outsocket.close() if @tracker_outsocket
 
 exports.Peer = Peer
 

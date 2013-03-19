@@ -2,7 +2,7 @@
   "name": "hashparty",
   "author": "Alexis Lesage",
   "description": "p2p messaging for dummies",
-  "version": "0.1-alpha",
+  "version": "0.1.0",
   "bin": {
     "launcher": "./lib/launcher.coffee"
   },
@@ -14,9 +14,9 @@
     "hashring": "~1.0.0",
     "underscore": "~1.4.4",
     "async": "~0.2.6",
-    "kademlia": "~0.2.0",
     "zmq": "~2.3.0",
-    "eventemitter2": "~0.4.11"
+    "eventemitter2": "~0.4.11",
+    "underscore.string": "~2.3.1"
   },
   "devDependencies": {
     "coffee-script": "1.4.0"
